@@ -52,6 +52,7 @@ class Telescope(object):
             
             # try and connect to telescope server
             uri = f'ws://{host}:{port}'
+            print(uri)
             websocket = ws.create_connection(uri)
 
             # send username and password
@@ -67,6 +68,9 @@ class Telescope(object):
             else:
                 reason = reply.get('result') or 'unknown'
                 Telescope.log.warning(f'Telescope is currently unavailable: {reason}')
+        except json.decoder.JSONDecodeError as e:
+            Telescope.log.critical(f'Did not receive valid response from TelescopeServer.')
+            raise Exception(f'Did not receive valid response from TelescopeServer.')
         except Exception as e:
             Telescope.log.critical(f'Error occurred in connecting to TelescopeServer: {e}')
             raise Exception(f'Unable to connect to TelescopeServer: {e}')

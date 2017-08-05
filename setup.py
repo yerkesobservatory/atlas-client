@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-setup(name='atlas-client',
+setup(name='atlas_client',
       version='0.1',
       description='Client package for Atlas telescopes',
       long_description=open('README.md').read(),

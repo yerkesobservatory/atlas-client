@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import hashlib
 import logging
 import colorlog
 import getpass
@@ -51,13 +52,16 @@ class Telescope(object):
             port = os.environ.get('ATLAS_WS_PORT') or 27404
             
             # try and connect to telescope server
-            uri = f'ws://{host}:{port}'
-            print(uri)
+            uri = f'wss://{host}:{port}'
             websocket = ws.create_connection(uri)
 
             # send username and password
+            plain_password = getpass.getpass('Atlas Password: ').encode('utf8')
+
+            # must encrypt with sha256 before sending
+            password = hashlib.sha256(plain_password).hexdigest()
             msg = {'email': username,
-                   'password': getpass.getpass('Atlas Password: ')}
+                   'password': password}
             websocket.send(json.dumps(msg))
 
             # wait for connection message

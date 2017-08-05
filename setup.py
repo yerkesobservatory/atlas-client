@@ -13,7 +13,6 @@ setup(name='atlas_client',
       packages=['telescope'],
       install_requires=[
           'colorlog>=3.0.1',
-          'gevent>=1.2.2',
-          'greenlet>=0.4.12',
-          'websocket>=0.2.1']
+          'websocket-client>=0.44.0',
+          'six>=1.10.0']
 )

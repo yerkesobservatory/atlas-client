@@ -13,7 +13,7 @@ class Telescope(object):
     # logger for class
     log = None
 
-    def __init__(self, username: str, host: str):
+    def __init__(self, username: str, host: str, secure: bool = True, print_results: bool = False):
         """ Create a new Telescope object by connecting to the TelescopeServer, 
         authenticating a new control session, and initializing the logging system. 
         """
@@ -25,14 +25,17 @@ class Telescope(object):
         # initialize unconnected websocket
         self.websocket = None
 
-        # connect to telescope server
-        self.connect(username, host)
+        # whether we should always print raw command results
+        self.print_results = print_results
 
-    def connect(self, username: str, host: str) -> bool:
+        # connect to telescope server
+        self.connect(username, host, secure)
+
+    def connect(self, username: str, host: str, secure: bool = True) -> bool:
         """ Try and connect to the TelescopeServer 
         """
         # try and create connection
-        websocket: ws.WebSocket = self.__connect(username, host)
+        websocket: ws.WebSocket = self.__connect(username, host, secure)
 
         # if valid connection
         if websocket:
@@ -43,24 +46,30 @@ class Telescope(object):
         return False
 
     @staticmethod
-    def __connect(username: str, host: str) -> ws.WebSocket:
+    def __connect(username: str, host: str, secure: bool) -> ws.WebSocket:
         """ Try and create a connection to the TelescopeServer and
         return the connected websocket. 
         """
         try:
             # get port spec
-            port = os.environ.get('ATLAS_WS_PORT') or 27404
-            
+            port: int = os.environ.get('ATLAS_WS_PORT') or 27404
+
+            # by default, use wss
+            protocol: str = 'wss'
+            if not secure:
+                protocol = 'ws'
+                
             # try and connect to telescope server
-            uri = f'wss://{host}:{port}'
+            uri: str = f'{protocol}://{host}:{port}'
             websocket = ws.create_connection(uri)
 
             # send username and password
-            plain_password = getpass.getpass('Atlas Password: ').encode('utf8')
+            plain_password: str = getpass.getpass('Atlas Password: ').encode('utf8')
 
             # must encrypt with sha256 before sending
             password = hashlib.sha256(plain_password).hexdigest()
-            msg = {'email': username,
+            msg = {'action': 'connect',
+                   'email': username,
                    'password': password}
             websocket.send(json.dumps(msg))
 
@@ -372,7 +381,8 @@ class Telescope(object):
             return None
 
         # print result
-        self.log.info(reply.get('result'))
+        if self.print_results:
+            self.log.info(reply.get('result'))
 
         # return it for processing by other methods
         return reply.get('result')
